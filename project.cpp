@@ -56,7 +56,7 @@ void desenhaEsfera(float raio, int fatias, int stacks) {
 
 void desenhaBaseLuminaria(float tamanhoBase, float altura) {
     glPushMatrix();
-        glColor3f(0.4,0.4,0.8);
+        glColor3f(1,1,1);
         glRotatef(90, 1, 0, 0);
         desenhaCilindro(tamanhoBase, tamanhoBase, altura, 100);
     glPopMatrix();
@@ -69,7 +69,7 @@ void desenhaPrimeiroBraco() {
         glRotatef(armAngle, 1.0f, 0.0f, 0.0f);
         desenhaCilindro(0.2f, 0.2f, 2.0f, 20); // Arm cylinder
         glTranslatef(0.0f, 0.0f, 0.0f); // Move to the top of the arm
-        glColor3f(0.3, 0.3, 0.8);
+        glColor3f(1,1,1);
         desenhaEsfera(0.3f, 20, 20); // Joint sphere
     glPopMatrix();
 }
@@ -119,31 +119,10 @@ void carregarTextura(const char* nomeArquivo, int indice)
 void inicializa(){
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
     carregarTextura("texturas/madeira_mesa.jpg", 0);
     carregarTextura("texturas/tijolo.png", 1);
     carregarTextura("texturas/madeira.png", 2);
-
-    //Configurações de Luz
-    GLfloat luzAmbiente[] = {0.2, 0.2, 0.2, 1.0}; // rgb + opacidade
-    GLfloat luzDifusa[] = {0.8, 0.8, 0.8, 1.0};
-    GLfloat luzEspecular[] = {1.0, 1.0, 1.0, 1.0};
-    GLfloat posicaoLuz[] = {1.0, 1.0, 1.0, 0.0}; // 0: luz direcional 1: pontual
-
-    glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, luzDifusa);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, luzEspecular);
-    glLightfv(GL_LIGHT0, GL_POSITION, posicaoLuz);
-
-    // configuracao do material
-    GLfloat materialAmbiente[] = {0.3, 0.3, 0.3, 1.0};
-    GLfloat materialDifuso[] = {0.0, 0.0, 1.0, 1.0};      // azul
-    GLfloat materialEspecular[] = {1.0, 1.0, 1.0, 1.0};
-    GLfloat materialBrilho[] = {50.0};                    // brilho medio
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiente);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDifuso);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, materialEspecular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, materialBrilho);
 }
 
 void desenhaBase(float tamanho){
@@ -182,11 +161,6 @@ void display(){
               rotationCam, 0.0, 0.0,
               0.0, 1.0, 0.0);
     glPushMatrix();
-        GLfloat posicaoLuz[] = {1.0, 1.0, 1.0, 0.0}; // 0: luz direcional 1: pontual
-        glRotatef(anguloLuzX, 1.0, 0.0, 0.0);
-        glRotatef(anguloLuzY, 0.0, 1.0, 0.0);
-        glRotatef(anguloLuzZ, 0.0, 0.0, 1.0);
-        glLightfv(GL_LIGHT0, GL_POSITION, posicaoLuz);
 
         glPushMatrix();
             glColor3f(0.3, 0.3, 0.3);
@@ -196,13 +170,14 @@ void display(){
         glPopMatrix();
 
         glPushMatrix();
-            glColor3f(1.0, 0.0, 0.0);
             glTranslatef(0.0, 0.3, 0.0);
             glTranslatef(posLampX, posLampY, posLampZ);
             desenhaLampada();
         glPopMatrix();
 
         glPushMatrix();
+            glColor3f(1.0, 1.0, 1.0);
+            glTranslatef(-5, 2, 0);
             glutSolidTeapot(3.0);
         glPopMatrix();
     glPopMatrix();
