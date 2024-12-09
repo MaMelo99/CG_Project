@@ -25,7 +25,7 @@ float anguloLuzX = 0.0;
 float anguloLuzY = 0.0;
 float anguloLuzZ = 0.0;
 
-int moveMode = 0;
+int moveMode = 1;
 
 
 void desenhaCilindro(float baseRadius, float topRadius, float height, int slices) {
@@ -56,7 +56,7 @@ void desenhaEsfera(float raio, int fatias, int stacks) {
 
 void desenhaBaseLuminaria(float tamanhoBase, float altura) {
     glPushMatrix();
-        glColor3f(0,0.2,1);
+        glColor3f(0.4,0.4,0.8);
         glRotatef(90, 1, 0, 0);
         desenhaCilindro(tamanhoBase, tamanhoBase, altura, 100);
     glPopMatrix();
@@ -65,11 +65,12 @@ void desenhaBaseLuminaria(float tamanhoBase, float altura) {
 
 void desenhaPrimeiroBraco() {
     glPushMatrix();
-        glTranslatef(0.0f, 1.5f, -1.2f); // Offset above the base
+        glTranslatef(0.0f, 1.3f, -1.2f); // Offset above the base
         glRotatef(armAngle, 1.0f, 0.0f, 0.0f);
         desenhaCilindro(0.2f, 0.2f, 2.0f, 20); // Arm cylinder
-        glTranslatef(0.0f, 2.0f, 0.0f); // Move to the top of the arm
-        desenhaEsfera(0.3f, 10, 20); // Joint sphere
+        glTranslatef(0.0f, -1.0f, 0.0f); // Move to the top of the arm
+        glColor3f(0.3, 0.3, 0.8);
+        desenhaEsfera(0.3f, 20, 20); // Joint sphere
     glPopMatrix();
 }
 
@@ -273,9 +274,6 @@ void teclado(unsigned char tecla, int x, int y){
         
         case 'm':
             moveMode = moveMode ^ 1;
-            if (moveMode == 1){
-                zCam = 20.0; xCam = 0.0;
-            }
             break;
     }
     glutPostRedisplay();
