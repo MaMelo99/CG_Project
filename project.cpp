@@ -68,7 +68,7 @@ void desenhaPrimeiroBraco() {
         glTranslatef(0.0f, 1.3f, -1.2f); // Offset above the base
         glRotatef(armAngle, 1.0f, 0.0f, 0.0f);
         desenhaCilindro(0.2f, 0.2f, 2.0f, 20); // Arm cylinder
-        glTranslatef(0.0f, -1.0f, 0.0f); // Move to the top of the arm
+        glTranslatef(0.0f, 0.0f, 0.0f); // Move to the top of the arm
         glColor3f(0.3, 0.3, 0.8);
         desenhaEsfera(0.3f, 20, 20); // Joint sphere
     glPopMatrix();
@@ -200,6 +200,10 @@ void display(){
             glTranslatef(0.0, 0.3, 0.0);
             glTranslatef(posLampX, posLampY, posLampZ);
             desenhaLampada();
+        glPopMatrix();
+
+        glPushMatrix();
+            glutSolidTeapot(3.0);
         glPopMatrix();
     glPopMatrix();
 
