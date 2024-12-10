@@ -143,21 +143,15 @@ void inicializa(){
     
     glEnable(GL_DEPTH_TEST);
 
-    GLfloat luzAmbiente[] = {0.7f, 0.7f, 0.7f, 1.0f};
+    //Luz global
+    GLfloat luzAmbiente[] = {1.0f, 1.0f, 1.0f, 1.0f};
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, luzAmbiente);
 
-    //Bulbo de luz
-    /*GLfloat luzPosicao[] = {posLampX, posLampY + 1.0f, posLampZ, 1.0f};
-    GLfloat luzDifusa[] = {1.0f, 1.0f, 0.8f, 1.0f};
-    GLfloat luzEspecular[] = {1.0f, 1.0f, 0.8f, 1.0f};*/
-
-    //glEnable(GL_LIGHT0);
-    //glLightfv(GL_LIGHT0, GL_POSITION);
     carregarTextura("texturas/madeira_mesa.jpg", 0);
     carregarTextura("texturas/porcelain.jpeg", 1);
     carregarTextura("texturas/porcelain_2.jpeg", 2);
 
-    glEnable(GL_LIGHTING);
+    //glEnable(GL_LIGHTING);
 }
 
 void desenhaBase(float tamanho){
@@ -197,6 +191,7 @@ void display(){
     gluLookAt(xCam, yCam, zCam,
               rotationCam, 0.0, 0.0,
               0.0, 1.0, 0.0);
+
     glPushMatrix();
 
         glPushMatrix();
