@@ -15,11 +15,16 @@ float rotacaoZ = 0.0;
 
 float baseAngle = 0.0f;
 float armAngle = 45.0f;
-float headAngle = -30.0f;
+float headAngle = 0.0f;
 
 float posLampX = 0.0f;
 float posLampY = 0.0f;
 float posLampZ = 0.0f;
+float rotationLamp = 0.0;
+
+GLfloat corHaste[] = {0.8, 0.8, 0.8};
+GLfloat corConec[] = {0.5, 0.5, 0.5};
+GLfloat corLamp[] = {1.0f, 0.9f, 0.6f};
 
 float anguloLuzX = 0.0;
 float anguloLuzY = 0.0;
@@ -39,12 +44,12 @@ void desenhaCilindro(float baseRadius, float topRadius, float height, int slices
         glPopMatrix();
     }
 
-    if (topRadius > 0.0f){
+    /*if (topRadius > 0.0f){
         glPushMatrix();
         glTranslatef(0.0f, 0.0f, height);
         gluDisk(quad, 0.0f, topRadius, slices, 1);
         glPopMatrix();
-    }
+    }*/
 
     gluDeleteQuadric(quad);
 }
@@ -56,7 +61,7 @@ void desenhaEsfera(float raio, int fatias, int stacks) {
 
 void desenhaBaseLuminaria(float tamanhoBase, float altura) {
     glPushMatrix();
-        glColor3f(1,1,1);
+        glColor3f(corConec[0], corConec[1], corConec[2]);
         glRotatef(90, 1, 0, 0);
         desenhaCilindro(tamanhoBase, tamanhoBase, altura, 100);
     glPopMatrix();
@@ -65,26 +70,43 @@ void desenhaBaseLuminaria(float tamanhoBase, float altura) {
 
 void desenhaPrimeiroBraco() {
     glPushMatrix();
+        glColor3f(corHaste[0], corHaste[1], corHaste[2]);
         glTranslatef(0.0f, 1.3f, -1.2f); // Offset above the base
         glRotatef(armAngle, 1.0f, 0.0f, 0.0f);
         desenhaCilindro(0.2f, 0.2f, 2.0f, 20); // Arm cylinder
         glTranslatef(0.0f, 0.0f, 0.0f); // Move to the top of the arm
-        glColor3f(1,1,1);
+        glColor3f(corConec[0], corConec[1], corConec[2]);
         desenhaEsfera(0.3f, 20, 20); // Joint sphere
     glPopMatrix();
 }
 
+void desenhaBulbo(){
+    glPushMatrix();
+        glColor3f(corLamp[0], corLamp[1], corLamp[2]);
+        glTranslatef(0.0, 0.0, 1.0);
+        desenhaEsfera(0.475, 20, 20);
+    glPopMatrix();
+}
 
 void desenhaSegundoBraco() {
     glPushMatrix();
-        glTranslatef(0.0f, 2.0f, 0.0f); // Offset above the first arm
-        glRotatef(-armAngle, 1.0f, 0.0f, 0.0f);
-        desenhaCilindro(0.2f, 0.2f, 1.5f, 20); // Second arm cylinder
-        glTranslatef(0.0f, 1.5f, 0.0f); // Move to the top of the second arm
-        desenhaEsfera(0.3f, 20, 20); // Joint sphere
-        glRotatef(headAngle, 1.0f, 0.0f, 0.0f);
-        glTranslatef(0.0f, 0.5f, 0.0f);
-        glutSolidCone(0.5f, 1.0f, 20, 20); // Lamp head (cone)
+        glPushMatrix();
+            glColor3f(corHaste[0], corHaste[1], corHaste[2]);
+            glTranslatef(0.0f, 1.5f, -1.1f); // Offset above the first arm
+            glRotatef(-armAngle, 1.0f, 0.0f, 0.0f);
+            desenhaCilindro(0.2f, 0.2f, 1.5f, 20); // Second arm cylinder
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(0.0f, 2.65f, 0.1f); // Move to the top of the second arm
+            glColor3f(corConec[0], corConec[1], corConec[2]);
+            desenhaEsfera(0.3f, 20, 20); // Joint sphere
+        glPopMatrix();
+        glPushMatrix();
+            glColor3f(corHaste[0], corHaste[1], corHaste[2]);
+            glTranslatef(0.0f, 3.3f, -0.3f);
+            desenhaCilindro(0.4f, 0.7f, 1.5f, 20); // Second arm cylinder
+            desenhaBulbo();
+        glPopMatrix();
     glPopMatrix();
 }
 
@@ -117,12 +139,12 @@ void carregarTextura(const char* nomeArquivo, int indice)
 }
 
 void inicializa(){
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glEnable(GL_TEXTURE_2D);
+    glClearColor(0.0, 0.0, 0.2, 1.0);
+    
     glEnable(GL_DEPTH_TEST);
     carregarTextura("texturas/madeira_mesa.jpg", 0);
-    carregarTextura("texturas/tijolo.png", 1);
-    carregarTextura("texturas/madeira.png", 2);
+    carregarTextura("texturas/porcelain.jpeg", 1);
+    carregarTextura("texturas/porcelain_2.jpeg", 2);
 }
 
 void desenhaBase(float tamanho){
@@ -147,9 +169,11 @@ void reshape(int largura, int altura) {
 }
 
 void desenhaLampada(){
+    glTranslatef(posLampX, posLampY, posLampZ);
+    glRotatef(rotationLamp, 0, 1, 0);
     desenhaBaseLuminaria(1.0, 0.5);
     desenhaPrimeiroBraco();
-    //desenhaSegundoBraco();
+    desenhaSegundoBraco();
 }
 
 void display(){
@@ -163,23 +187,30 @@ void display(){
     glPushMatrix();
 
         glPushMatrix();
+            glEnable(GL_TEXTURE_2D);
             glColor3f(0.3, 0.3, 0.3);
             glScalef(20.0, 0.2,20.0);
             desenhaBase(1.0);
+            //Desabilitando texturas para evitar interferência nas cores
+            glDisable(GL_TEXTURE_2D);
             
         glPopMatrix();
 
         glPushMatrix();
-            glTranslatef(0.0, 0.3, 0.0);
-            glTranslatef(posLampX, posLampY, posLampZ);
+            glTranslatef(0.0, 0.3, 0.0);          
             desenhaLampada();
         glPopMatrix();
 
         glPushMatrix();
+            glBindTexture(GL_TEXTURE_2D, idsTextura[2]);
+            glEnable(GL_TEXTURE_2D);
             glColor3f(1.0, 1.0, 1.0);
             glTranslatef(-5, 2, 0);
             glutSolidTeapot(3.0);
+            glDisable(GL_TEXTURE_2D);
+            
         glPopMatrix();
+        
     glPopMatrix();
 
 
@@ -249,6 +280,18 @@ void teclado(unsigned char tecla, int x, int y){
                 else{
                     posLampZ += 1.0; 
                 }
+            break;
+        
+        case 'e':
+            rotationLamp -= 30;
+            if (rotationLamp >=360)
+                rotationLamp = 0;
+            break;
+
+        case 'q':
+            rotationLamp += 30;
+            if (rotationLamp <= -360)
+                rotationLamp = 0;
             break;
         
         case 'm':
