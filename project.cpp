@@ -8,12 +8,13 @@
 float yCam = 5.0;
 float xCam = 0.0;
 float zCam = 20.0;
-float rotationCam = 0.0;
+float rotationCamX = 0.0;
+float rotationCamY = 0.0;
 
 int mouseOldX = -1, mouseOldY = -1;
 bool isMousePressed = false;  
 
-GLuint idsTextura[3];
+GLuint idsTextura[10];
 float rotacaoX = 0.0;
 float rotacaoY = 0.0;
 float rotacaoZ = 0.0;
@@ -29,9 +30,9 @@ float posLampY = 0.0f;
 float posLampZ = 0.0f;
 float rotationLamp = 0.0;
 
-GLfloat corHaste[] = {0.8, 0.8, 0.8};
-GLfloat corConec[] = {0.5, 0.5, 0.5};
-GLfloat corLamp[] = {1.0f, 0.9f, 0.6f};
+GLfloat corHaste[] = {0.8, 0.8, 0.8, 1.0f};
+GLfloat corConec[] = {0.5, 0.5, 0.5, 1.0f};
+GLfloat corLamp[] = {1.0f, 0.9f, 0.6f, 1.0f};
 
 float anguloLuzX = 0.0;
 float anguloLuzY = 0.0;
@@ -56,20 +57,81 @@ bool isMovingRight = false;
 float sizeTeapot = 3.0;
 float teapotPos[] = {-10.0, 2, 0};
 
+void resetAllGlobals(){
+    yCam = 5.0;
+    xCam = 0.0;
+    zCam = 20.0;
+    rotationCamX = 0.0;
+    rotationCamY = 0.0;
+    mouseOldX = -1;
+    mouseOldY = -1;
+    rotacaoX = 0.0;
+    rotacaoY = 0.0;
+    rotacaoZ = 0.0;
 
-int moveMode = 1;
+    baseAngle = 0.0f;
+    armAngle = 45.0f;
+    headAngleY = 0.0f;
+    headAngleX = 0.0f;
+    lampHeight = 5.0f;
 
-bool checkCollision() {
-    // Calculate the distance between the lamp and the teapot in 3D space
-    float distanceX = fabs(posLampX - teapotPos[0]);
-    float distanceZ = fabs(posLampZ - teapotPos[2]);
+    posLampX = 0.0f;
+    posLampY = 0.0f;
+    posLampZ = 0.0f;
+    rotationLamp = 0.0;
 
-    // If the lamp is within the radius of the teapot in the X and Z axis, there's a collision
-    if (distanceX <= sizeTeapot && distanceZ <= sizeTeapot && posLampY <= teapotPos[1] + jumpHeight) {
-        return true;  // Collision detected
-    }
+    anguloLuzX = 0.0;
+    anguloLuzY = 0.0;
+    anguloLuzZ = 0.0;
 
-    return false;  // No collision
+}
+
+void configuraIluminacao() {
+    glEnable(GL_LIGHTING);  
+    glEnable(GL_LIGHT0); 
+    glEnable(GL_DEPTH_TEST);
+
+    GLfloat luzAmbiente[] = {0.3f, 0.3f, 0.3f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
+    
+}
+
+void configuraMaterialHaste(){
+    GLfloat materialDifuso[] = {corHaste[0], corHaste[1], corHaste[2], corHaste[3]};    // vermelho
+    GLfloat materialAmbiente[] = {corHaste[0], corHaste[1], corHaste[2], corHaste[3]};  // vermelho escuro
+    GLfloat materialEspecular[] = {corHaste[0], corHaste[1], corHaste[2], corHaste[3]}; 
+
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDifuso);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiente);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, materialEspecular);
+
+    glMaterialf(GL_FRONT, GL_SHININESS, 30); // brilho medio
+}
+
+void configuraMaterialConec(){
+    GLfloat materialDifuso[] = {corConec[0], corConec[1], corConec[2], corConec[3]};    // vermelho
+    GLfloat materialAmbiente[] = {corConec[0], corConec[1], corConec[2], corConec[3]};  // vermelho escuro
+    GLfloat materialEspecular[] = {corConec[0], corConec[1], corConec[2], corConec[3]}; 
+
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDifuso);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiente);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, materialEspecular);
+
+    glMaterialf(GL_FRONT, GL_SHININESS, 30); // brilho medio
+
+}
+
+void configuraMaterialLamp(){
+    GLfloat materialDifuso[] = {corLamp[0], corLamp[1], corLamp[2], corLamp[3]};    // vermelho
+    GLfloat materialAmbiente[] = {corLamp[0], corLamp[1], corLamp[2], corLamp[3]};  // vermelho escuro
+    GLfloat materialEspecular[] = {corLamp[0], corLamp[1], corLamp[2], corLamp[3]}; 
+
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDifuso);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiente);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, materialEspecular);
+
+    glMaterialf(GL_FRONT, GL_SHININESS, 30); // brilho medio
+
 }
 
 void calculateJumpPosition() {
@@ -81,13 +143,13 @@ void calculateJumpPosition() {
         jumpYPos = jumpHeight * sin(M_PI * normalizedTime); // sine wave for vertical motion
 
         // Move the lamp based on the direction of movement (WASD keys)
-        if (isMovingForward && !checkCollision()) {
+        if (isMovingForward) {
             posLampZ -= 0.05f;  // Move forward (decrease Z)
-        } else if (isMovingBackward && !checkCollision()) {
+        } else if (isMovingBackward) {
             posLampZ += 0.05f;  // Move backward (increase Z)
-        } else if (isMovingLeft && !checkCollision()) {
+        } else if (isMovingLeft) {
             posLampX -= 0.05f;  // Move left (decrease X)
-        } else if (isMovingRight && !checkCollision()) {
+        } else if (isMovingRight) {
             posLampX += 0.05f;  // Move right (increase X)
         }
 
@@ -134,13 +196,6 @@ void desenhaCilindro(float baseRadius, float topRadius, float height, int slices
         glPopMatrix();
     }
 
-    /*if (topRadius > 0.0f){
-        glPushMatrix();
-        glTranslatef(0.0f, 0.0f, height);
-        gluDisk(quad, 0.0f, topRadius, slices, 1);
-        glPopMatrix();
-    }*/
-
     gluDeleteQuadric(quad);
 }
 
@@ -151,7 +206,7 @@ void desenhaEsfera(float raio, int fatias, int stacks) {
 
 void desenhaBaseLuminaria(float tamanhoBase, float altura) {
     glPushMatrix();
-        glColor3f(corConec[0], corConec[1], corConec[2]);
+        configuraMaterialConec();
         glRotatef(90, 1, 0, 0);
         desenhaCilindro(tamanhoBase, tamanhoBase, altura, 100);
     glPopMatrix();
@@ -159,19 +214,19 @@ void desenhaBaseLuminaria(float tamanhoBase, float altura) {
 
 void desenhaPrimeiroBraco() {
     glPushMatrix();
-        glColor3f(corHaste[0], corHaste[1], corHaste[2]);
+        configuraMaterialHaste();
         glTranslatef(0.0f, 1.3f, -1.2f); // Offset above the base
         glRotatef(armAngle, 1.0f, 0.0f, 0.0f);
         desenhaCilindro(0.2f, 0.2f, 2.0f, 20); // Arm cylinder
         glTranslatef(0.0f, 0.0f, 0.0f); // Move to the top of the arm
-        glColor3f(corConec[0], corConec[1], corConec[2]);
+        configuraMaterialConec();
         desenhaEsfera(0.3f, 20, 20); // Joint sphere
     glPopMatrix();
 }
 
 void desenhaBulbo(){
     glPushMatrix();
-        glColor3f(corLamp[0], corLamp[1], corLamp[2]);
+        configuraMaterialLamp();
         glTranslatef(0.0, 0.0, 1.0);
         desenhaEsfera(0.475, 20, 20);
     glPopMatrix();
@@ -180,18 +235,18 @@ void desenhaBulbo(){
 void desenhaSegundoBraco() {
     glPushMatrix();
         glPushMatrix();
-            glColor3f(corHaste[0], corHaste[1], corHaste[2]);
+            configuraMaterialHaste();
             glTranslatef(0.0f, 1.5f, -1.1f); // Offset above the first arm
             glRotatef(-armAngle, 1.0f, 0.0f, 0.0f);
             desenhaCilindro(0.2f, 0.2f, 1.5f, 20); // Second arm cylinder
         glPopMatrix();
         glPushMatrix();
             glTranslatef(0.0f, 2.65f, 0.1f); // Move to the top of the second arm
-            glColor3f(corConec[0], corConec[1], corConec[2]);
+            configuraMaterialConec();
             desenhaEsfera(0.3f, 20, 20); // Joint sphere
         glPopMatrix();
         glPushMatrix();
-            glColor3f(corHaste[0], corHaste[1], corHaste[2]);
+            configuraMaterialHaste();
             glTranslatef(0.0f, 3.15f, -0.3f);
             glRotatef(headAngleY, 0.0, 1.0, 0.0);
             glRotatef(headAngleX, 1.0, 0.0, 0.0);
@@ -229,29 +284,21 @@ void carregarTextura(const char* nomeArquivo, int indice)
     stbi_image_free(dados);              
 }
 
-void configuraIluminacao() {
-    GLfloat luzAmbiente[] = {0.3f, 0.3f, 0.3f, 1.0f};  // Soft ambient light
-    GLfloat luzDifusa[] = {1.0f, 1.0f, 1.0f, 1.0f};  // White diffuse light
-    GLfloat luzPosicao[] = {5.0f, 5.0f, 5.0f, 1.0f};  // Light source position
-
-    glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, luzDifusa);
-    glLightfv(GL_LIGHT0, GL_POSITION, luzPosicao);
-    glEnable(GL_LIGHTING);  // Enable lighting
-    glEnable(GL_LIGHT0);    // Enable light source
-}
-
 void inicializa(){
     glClearColor(0.0, 0.0, 0.2, 1.0);
     
-    glEnable(GL_DEPTH_TEST);
 
     //Luz global
     configuraIluminacao();
 
     carregarTextura("texturas/madeira_mesa.jpg", 0);
-    carregarTextura("texturas/porcelain.jpeg", 1);
+    carregarTextura("texturas/madeira.png", 1);
     carregarTextura("texturas/porcelain_2.jpeg", 2);
+    carregarTextura("texturas/parede_norte.jpg", 3);
+    carregarTextura("texturas/parede_leste.jpg", 4);
+    carregarTextura("texturas/parede_oeste.jpg", 5);
+    carregarTextura("texturas/chao.jpeg", 6);
+    carregarTextura("texturas/teto.jpeg", 7);
 
     //glEnable(GL_LIGHTING);
 }
@@ -313,15 +360,155 @@ void drawTeacup(float radius, float height, float handleRadius) {
         
     glPopMatrix();
 }
+void desenhaQuarto(float tamanho){
+    glPushMatrix();
+        //Parede Norte
+        glBindTexture(GL_TEXTURE_2D, idsTextura[3]);
+        glBegin(GL_QUADS);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-tamanho, tamanho, -tamanho);
+            glTexCoord2f(0.0, 0.0); glVertex3f(tamanho, tamanho, -tamanho);
+            glTexCoord2f(0.0, 1.0); glVertex3f(tamanho, -tamanho * 0.4, -tamanho);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-tamanho, -tamanho * 0.4, -tamanho);
+        glEnd();
 
-void desenhaBase(float tamanho){
+        //Parede Oeste
+        glBindTexture(GL_TEXTURE_2D, idsTextura[5]);
+        glBegin(GL_QUADS);
+        
+            glTexCoord2f(1.0, 0.0); glVertex3f(tamanho, tamanho, -tamanho);
+            glTexCoord2f(0.0, 0.0); glVertex3f(tamanho, tamanho, tamanho);
+            glTexCoord2f(0.0, 1.0); glVertex3f(tamanho, -tamanho * 0.4, tamanho);
+            glTexCoord2f(1.0, 1.0); glVertex3f(tamanho, -tamanho * 0.4, -tamanho);
+        glEnd();
+
+        //Parede Leste
+        glBindTexture(GL_TEXTURE_2D, idsTextura[4]);
+        glBegin(GL_QUADS);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-tamanho, tamanho, -tamanho);
+            glTexCoord2f(0.0, 0.0); glVertex3f(-tamanho, tamanho, tamanho);
+            glTexCoord2f(0.0, 1.0); glVertex3f(-tamanho, -tamanho * 0.4, tamanho);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-tamanho, -tamanho * 0.4, -tamanho);
+        glEnd();
+
+        //chao
+        glBindTexture(GL_TEXTURE_2D, idsTextura[6]);
+        glBegin(GL_QUADS);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-tamanho, -tamanho * 0.4, -tamanho);
+            glTexCoord2f(0.0, 0.0); glVertex3f(tamanho, -tamanho * 0.4, -tamanho);
+            glTexCoord2f(0.0, 1.0); glVertex3f(tamanho, -tamanho * 0.4, tamanho);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-tamanho, -tamanho * 0.4, tamanho);
+        glEnd();
+
+        //teto
+        glBindTexture(GL_TEXTURE_2D, idsTextura[7]);
+        glBegin(GL_QUADS);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-tamanho, tamanho, -tamanho);
+            glTexCoord2f(0.0, 0.0); glVertex3f(tamanho, tamanho, -tamanho);
+            glTexCoord2f(0.0, 1.0); glVertex3f(tamanho, tamanho, tamanho);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-tamanho, tamanho, tamanho);
+        glEnd();
+
+        //Parede Sul
+        glBindTexture(GL_TEXTURE_2D, idsTextura[3]);
+        glBegin(GL_QUADS);
+            glTexCoord2f(1.0, 0.0); glVertex3f(-tamanho, tamanho, tamanho);
+            glTexCoord2f(0.0, 0.0); glVertex3f(tamanho, tamanho, tamanho);
+            glTexCoord2f(0.0, 1.0); glVertex3f(tamanho, -tamanho * 0.4, tamanho);
+            glTexCoord2f(1.0, 1.0); glVertex3f(-tamanho, -tamanho * 0.4, tamanho);
+        glEnd();
+    glPopMatrix();
+}
+void desenhaPerna(float x, float z, float tamanho, float altura, float largura) {
     glBindTexture(GL_TEXTURE_2D, idsTextura[0]);
+
+    // Frente
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(x, -tamanho, z);
+        glTexCoord2f(1.0, 0.0); glVertex3f(x + largura, -tamanho - 1, z);
+        glTexCoord2f(1.0, 1.0); glVertex3f(x + largura, -tamanho - 1 - altura, z);
+        glTexCoord2f(0.0, 1.0); glVertex3f(x, -tamanho- 1- altura, z);
+    glEnd();
+
+    // Trás
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(x, -tamanho- 1 , z + largura);
+        glTexCoord2f(1.0, 0.0); glVertex3f(x + largura, -tamanho- 1, z + largura);
+        glTexCoord2f(1.0, 1.0); glVertex3f(x + largura, -tamanho - 1- altura, z + largura);
+        glTexCoord2f(0.0, 1.0); glVertex3f(x, -tamanho - 1 - altura, z + largura);
+    glEnd();
+
+    // Lado esquerdo
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(x, -tamanho - 1, z);
+        glTexCoord2f(1.0, 0.0); glVertex3f(x, -tamanho - 1 , z + largura);
+        glTexCoord2f(1.0, 1.0); glVertex3f(x, -tamanho - 1 - altura, z + largura);
+        glTexCoord2f(0.0, 1.0); glVertex3f(x, -tamanho - 1 - altura, z);
+    glEnd();
+
+    // Lado direito
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(x + largura, -tamanho - 1, z);
+        glTexCoord2f(1.0, 0.0); glVertex3f(x + largura, -tamanho - 1, z + largura);
+        glTexCoord2f(1.0, 1.0); glVertex3f(x + largura, -tamanho - 1 - altura, z + largura);
+        glTexCoord2f(0.0, 1.0); glVertex3f(x + largura, -tamanho  - 1 - altura, z);
+    glEnd();
+
+    // Topo
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(x, -tamanho - 1 , z);
+        glTexCoord2f(1.0, 0.0); glVertex3f(x + largura, -tamanho - 1, z);
+        glTexCoord2f(1.0, 1.0); glVertex3f(x + largura, -tamanho - 1, z + largura);
+        glTexCoord2f(0.0, 1.0); glVertex3f(x, -tamanho - 1, z + largura);
+    glEnd();
+
+    // Base
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(x, -tamanho - 1 - altura, z);
+        glTexCoord2f(1.0, 0.0); glVertex3f(x + largura, -tamanho - 1 - altura, z);
+        glTexCoord2f(1.0, 1.0); glVertex3f(x + largura, -tamanho  - 1 - altura, z + largura);
+        glTexCoord2f(0.0, 1.0); glVertex3f(x, -tamanho - 1 - altura, z + largura);
+    glEnd();
+}
+
+void desenhaBase(float tamanho, float espessura){
+    glBindTexture(GL_TEXTURE_2D, idsTextura[0]);
+    //Cima
     glBegin(GL_QUADS);
         glTexCoord2f(0.0, 0.0); glVertex3f(-tamanho, -tamanho, -tamanho);
         glTexCoord2f(1.0, 0.0); glVertex3f(tamanho, -tamanho, -tamanho);
         glTexCoord2f(1.0, 1.0); glVertex3f(tamanho, -tamanho, tamanho);
         glTexCoord2f(0.0, 1.0); glVertex3f(-tamanho, -tamanho, tamanho);
     glEnd();
+
+    //Baixo
+    glBindTexture(GL_TEXTURE_2D, idsTextura[0]);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(-tamanho, -tamanho - espessura, -tamanho);
+        glTexCoord2f(1.0, 0.0); glVertex3f(tamanho, -tamanho - espessura, -tamanho);
+        glTexCoord2f(1.0, 1.0); glVertex3f(tamanho, -tamanho - espessura, tamanho);
+        glTexCoord2f(0.0, 1.0); glVertex3f(-tamanho, -tamanho - espessura, tamanho);
+    glEnd();
+
+    //Frente
+    glBindTexture(GL_TEXTURE_2D, idsTextura[1]);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex3f(-tamanho, -tamanho, tamanho);
+        glTexCoord2f(1.0, 0.0); glVertex3f(tamanho, -tamanho, tamanho);
+        glTexCoord2f(1.0, 1.0); glVertex3f(tamanho, -tamanho - espessura, tamanho);
+        glTexCoord2f(0.0, 1.0); glVertex3f(-tamanho, -tamanho - espessura, tamanho);
+    glEnd();
+
+
+}
+
+void desenhaMesaComPernas(float tamanho, float espessura, float alturaPerna, float larguraPerna) {
+    desenhaBase(tamanho, espessura);
+
+    // Adiciona as pernas nas extremidades
+    desenhaPerna(-tamanho, -tamanho, tamanho, alturaPerna, larguraPerna); // Perna esquerda frontal
+    desenhaPerna(tamanho - larguraPerna, -tamanho, tamanho, alturaPerna, larguraPerna); // Perna direita frontal
+    desenhaPerna(-tamanho, tamanho - larguraPerna, tamanho, alturaPerna, larguraPerna); // Perna esquerda traseira
+    desenhaPerna(tamanho - larguraPerna, tamanho - larguraPerna, tamanho, alturaPerna, larguraPerna); // Perna direita traseira
 }
 void reshape(int largura, int altura) {
  glViewport(0, 0, largura, altura);
@@ -329,7 +516,7 @@ void reshape(int largura, int altura) {
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
 
- gluPerspective(65.0, (float)largura / (float)altura, 1.0, 50.0);
+ gluPerspective(65.0, (float)largura / (float)altura, 1.0, 100.0);
 
  glMatrixMode(GL_MODELVIEW);
  glLoadIdentity();
@@ -378,16 +565,21 @@ void display(){
 
     //Posicionamento da Câmera
     gluLookAt(xCam, yCam, zCam,
-              rotationCam, 0.0, 0.0,
+              rotationCamX, rotationCamY, 0.0,
               0.0, 1.0, 0.0);
 
     glPushMatrix();
+        glPushMatrix();
+        glEnable(GL_TEXTURE_2D);
+        desenhaQuarto(40);
+        glDisable(GL_TEXTURE_2D);
+        glPopMatrix();
 
         glPushMatrix();
             glEnable(GL_TEXTURE_2D);
             glColor3f(0.3, 0.3, 0.3);
             glScalef(20.0, 0.2,20.0);
-            desenhaBase(1.0);
+            desenhaMesaComPernas(0.8, 3, 75, 0.2);
             //Desabilitando texturas para evitar interferência nas cores
             glDisable(GL_TEXTURE_2D);
             
@@ -425,28 +617,48 @@ void display(){
 
 void tecladoEspecial(int tecla, int x, int y){
     switch(tecla){
-        case GLUT_KEY_DOWN:
+        case GLUT_KEY_END:
             if (headAngleX <= 30){
                 headAngleX += 5;
             }
             break;  
             
-        case GLUT_KEY_UP:
+        case GLUT_KEY_PAGE_UP:
             if (headAngleX >= -40){
                 headAngleX -= 5;
             }
             break;
 
-        case GLUT_KEY_LEFT:
+        case GLUT_KEY_HOME:
             if (headAngleY >= -45){
                 headAngleY -= 5;
             }
             break;
         
-        case GLUT_KEY_RIGHT:
+        case GLUT_KEY_PAGE_DOWN:
             if (headAngleY <= 45){
                 headAngleY += 5;
             }
+            break;
+
+        case GLUT_KEY_UP:
+            if (yCam <= 35)
+            yCam += 0.5;
+            break;  
+            
+        case GLUT_KEY_DOWN:
+            if (yCam >= -15)
+            yCam -= 0.5;
+            break;  
+
+        case GLUT_KEY_LEFT:
+            if (xCam <= 40)
+            xCam -= 0.5;
+            break;
+        
+        case GLUT_KEY_RIGHT:
+            if (xCam >= -40)
+            xCam += 0.5;
             break;
     }
     glutPostRedisplay();
@@ -502,8 +714,8 @@ void teclado(unsigned char tecla, int x, int y){
             startJump();
             break;
         
-        case 'm':
-            moveMode = moveMode ^ 1;
+        case 'r':
+            resetAllGlobals();
             break;
     }
     glutPostRedisplay();
@@ -511,16 +723,17 @@ void teclado(unsigned char tecla, int x, int y){
 
 void mouseMotion(int x, int y) {
     if (isMousePressed) {
-        // Calculate change in mouse position
+        // Calcula a variacao da posição de X
         int deltaX = x - mouseOldX;
         int deltaY = y - mouseOldY;
 
-        // Update camera rotation based on mouse movement
-        rotationCam += deltaX * 0.1f;  // Rotate the camera horizontally
-        yCam -= deltaY * 0.05f;        // Move camera vertically (up/down)
+        // Atualiza rotação da camera
+        rotationCamX += deltaX * 0.1f;  // Rotate the camera horizontally
+        rotationCamY += deltaY * 0.1f; //Rotaciona a camera verticalmente
 
-        if (rotationCam > 90.0f) rotationCam = 90.0f;
-        if (rotationCam < -90.0f) rotationCam = -90.0f;
+        if (rotationCamY > 90.0f) rotationCamY = 90.0f;
+        if (rotationCamY < -90.0f) rotationCamY = -90.0f;
+        
 
         // Update old mouse position
         mouseOldX = x;
@@ -542,6 +755,29 @@ void mouseButton(int button, int state, int x, int y) {
         }
     }
 }
+void menu(int opcao){
+    switch (opcao){
+        case 1:
+            jumpHeight = 2.0f;
+            break;
+        case 2:
+            jumpHeight = 1.0f;
+            break;
+        case 3:
+            jumpHeight = 0.5f;
+            break;
+        case 4:
+            jumpDuration = 0.5f;
+            break;
+        case 5:
+            jumpDuration = 1.0f;
+            break;
+        case 6:
+            jumpDuration = 2.0f;
+            break;
+    }
+    glutPostRedisplay();
+}
 
 int main(int argc, char** argv){
 
@@ -554,6 +790,23 @@ int main(int argc, char** argv){
     
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
+
+    int submenuAltura = glutCreateMenu(menu);
+    glutAddMenuEntry("Alto", 1);
+    glutAddMenuEntry("Normal", 2);
+    glutAddMenuEntry("Baixo", 3);
+
+    int submenuDuracao = glutCreateMenu(menu);
+    glutAddMenuEntry("Rapido", 4);
+    glutAddMenuEntry("Normal", 5);
+    glutAddMenuEntry("Lento", 6);
+
+    glutCreateMenu(menu);
+    glutAddSubMenu("Altura Salto", submenuAltura);
+    glutAddSubMenu("Duracao Salto", submenuDuracao);
+
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+
     glutSpecialFunc(tecladoEspecial);
     glutKeyboardFunc(teclado);
     glutMotionFunc(mouseMotion);
