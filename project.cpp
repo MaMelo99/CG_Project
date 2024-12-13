@@ -1,7 +1,10 @@
 //#include <GL/glut.h> //->For Linux
 #include <cmath>
-#include <GL/gl.h> //-> For Windows
-#include <GL/glu.h> //-> For Windows
+#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <stdio.h>
+#include <stdlib.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb_image.h"
 
@@ -263,8 +266,9 @@ void carregarTextura(const char* nomeArquivo, int indice)
 
     unsigned char *dados = stbi_load(nomeArquivo, &largura, &altura, &canais, 0);
 
-    if (!dados)
-    exit(1);
+    if (!dados){
+    fprintf(stderr, "Erro ao carregar a textura: %s\n", nomeArquivo);
+    exit(1);}
 
     // gerar textura
     glGenTextures(1, &idsTextura[indice]);
@@ -297,8 +301,8 @@ void inicializa(){
     carregarTextura("texturas/parede_norte.jpg", 3);
     carregarTextura("texturas/parede_leste.jpg", 4);
     carregarTextura("texturas/parede_oeste.jpg", 5);
-    carregarTextura("texturas/chao.jpeg", 6);
-    carregarTextura("texturas/teto.jpeg", 7);
+    carregarTextura("texturas/chao.jpg", 6);
+    carregarTextura("texturas/teto.jpg", 7);
 
     //glEnable(GL_LIGHTING);
 }
