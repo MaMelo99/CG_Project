@@ -1,7 +1,7 @@
-#include <GL/glut.h>
+//#include <GL/glut.h> //->For Linux
 #include <cmath>
-//#include <GL/gl.h> -> For Windows
-//#include <GL/glu.h> -> For Windows
+#include <GL/gl.h> //-> For Windows
+#include <GL/glu.h> //-> For Windows
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb_image.h"
 
